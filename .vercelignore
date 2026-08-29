@@ -1,0 +1,7 @@
+.next
+node_modules
+lighthouse-reports
+pagespeed-reports
+*.md
+*.tsbuildinfo
+.env*
