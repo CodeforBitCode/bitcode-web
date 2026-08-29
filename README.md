@@ -142,6 +142,8 @@ All feature, fix, maintenance, refactoring, and documentation work must use a sh
 
 ## Deploy
 
+With Vercel Git integration enabled, merging a reviewed pull request into `main` triggers the production deployment, while pull-request branches can receive preview deployments.
+
 Import the GitHub repository into Vercel or reconnect the existing project:
 
 ```bash
