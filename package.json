@@ -16,9 +16,9 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check",
-    "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate": "node scripts/run-cli.mjs scripts/migrate.ts",
     "db:studio": "drizzle-kit studio",
-    "admin:create": "tsx scripts/create-admin.ts"
+    "admin:create": "node scripts/run-cli.mjs scripts/create-admin.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
