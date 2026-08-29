@@ -10,10 +10,10 @@ A production-ready BitCode website and MCP endpoint built as one Next.js applica
 - Stateless public MCP endpoint at `/mcp`
 - Neon PostgreSQL through the serverless driver
 - Drizzle ORM with committed SQL migrations under `drizzle/`
-- Role and permission definitions for student, parent/guardian, instructor, and admin access
+- First-party staff credentials, database-backed sessions, and centralized role permissions
 - Vercel deployment with no separate backend or microservices
 
-Authentication is not active yet. The database user/role model and permission map are ready, but no login, session, password, OAuth provider, or dashboard has been added. When authentication is implemented, use a secure session provider and enforce the role permissions in server-side handlers.
+Staff authentication uses Node.js `scrypt` password hashes and cryptographically random session tokens. Only SHA-256 session-token hashes are stored. Admin pages and APIs enforce permissions independently on the server; no OAuth or external authentication service is required.
 
 Payment processing is also not active. Enrollments include payment status, amount in minor units, currency, provider, external order/payment references, and paid timestamp so a provider can be integrated later without storing card details or redesigning enrollment data.
 
@@ -30,7 +30,7 @@ Copy `.env.example` to the ignored `.env.local` file and add values there. Never
 
 | Variable | Local development | Vercel | Purpose |
 |---|---|---|---|
-| `DATABASE_URL` | Required for migrations and persistent enquiries | Required for persistent enquiries | Neon PostgreSQL connection string |
+| `DATABASE_URL` | Required for migrations, enquiries, and staff login | Required | Neon PostgreSQL connection string |
 | `NEXT_PUBLIC_SITE_URL` | Optional | Optional | Custom canonical URL; Vercel supplies its production URL automatically |
 | `VERCEL_PROJECT_PRODUCTION_URL` | Not set manually | Supplied by Vercel | Default production metadata URL |
 | `NODE_ENV` | Supplied by Next.js | Supplied by Vercel | Runtime mode |
@@ -63,6 +63,7 @@ Change `lib/db/schema.ts`, run `npm run db:generate`, review the generated SQL, 
 The initial schema contains:
 
 - `users` and `user_roles`
+- `user_credentials` and `auth_sessions`
 - `student_profiles` and `guardian_students`
 - `courses` and `cohorts`
 - `enrollments`, including future payment fields
@@ -85,6 +86,21 @@ Open `http://localhost:3000`. For a production verification:
 npm run build
 npm start
 ```
+
+## Admin enquiries
+
+Apply migrations, then create the first staff account from an interactive local terminal:
+
+```bash
+npm run db:migrate
+npm run admin:create
+```
+
+The command reads `.env.local`, prompts for email, display name, `admin` or `marketing`, and accepts the password through hidden terminal input. It never accepts or prints a password argument and creates the user, credential, and role atomically. There is no public registration route. Run it against the intended database, then sign in at `/admin/login`.
+
+Both `admin` and `marketing` may view, search, filter, paginate, and update enquiries. Only `admin` receives the broader permission set; permissions remain centralized in `lib/auth/roles.ts`. Enquiry workflow states are `new`, `contacted`, `converted`, `closed`, with the existing `spam` state retained.
+
+Sessions expire after 12 hours. Cookies are HttpOnly, SameSite=Lax, and Secure in production. Raw session tokens are never stored. Five failed password attempts lock the account for 15 minutes; the response remains generic to avoid account discovery. Logout revokes the database session. Apply schema changes only with committed Drizzle migrations—never schema push.
 
 On Windows, use `npm.cmd` and `npx.cmd` if PowerShell blocks unsigned `.ps1` shims. No administrator access or execution-policy change is required.
 

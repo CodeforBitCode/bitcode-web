@@ -15,6 +15,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { appRoles } from "@/lib/auth/roles";
+import { enquiryStatuses } from "@/lib/enquiries/status";
 
 export const userStatus = pgEnum("user_status", ["active", "inactive"]);
 export const appRole = pgEnum("app_role", appRoles);
@@ -40,12 +41,7 @@ export const paymentStatus = pgEnum("payment_status", [
   "refunded",
   "partially_refunded",
 ]);
-export const enquiryStatus = pgEnum("enquiry_status", [
-  "new",
-  "contacted",
-  "closed",
-  "spam",
-]);
+export const enquiryStatus = pgEnum("enquiry_status", enquiryStatuses);
 
 export const users = pgTable(
   "users",
@@ -79,6 +75,56 @@ export const userRoles = pgTable(
   (table) => [
     primaryKey({ columns: [table.userId, table.role] }),
     index("user_roles_role_idx").on(table.role),
+  ],
+);
+
+export const userCredentials = pgTable(
+  "user_credentials",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    passwordHash: text("password_hash").notNull(),
+    failedLoginAttempts: integer("failed_login_attempts").default(0).notNull(),
+    lockedUntil: timestamp("locked_until", { withTimezone: true }),
+    passwordChangedAt: timestamp("password_changed_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "user_credentials_failed_attempts_nonnegative",
+      sql`${table.failedLoginAttempts} >= 0`,
+    ),
+  ],
+);
+
+export const authSessions = pgTable(
+  "auth_sessions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("auth_sessions_token_hash_unique").on(table.tokenHash),
+    index("auth_sessions_user_idx").on(table.userId),
+    index("auth_sessions_expires_idx").on(table.expiresAt),
   ],
 );
 
@@ -252,6 +298,7 @@ export const enquiries = pgTable(
   },
   (table) => [
     index("enquiries_status_created_idx").on(table.status, table.createdAt),
+    index("enquiries_created_id_idx").on(table.createdAt, table.id),
     index("enquiries_email_idx").on(table.email),
   ],
 );
