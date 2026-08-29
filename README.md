@@ -136,6 +136,10 @@ npm run build
 
 `.github/workflows/ci.yml` runs `npm ci`, lint/typecheck, focused tests, migration checks, and a production build on pushes to `main` and pull requests. CI does not connect to a live database and therefore does not need `DATABASE_URL`.
 
+## Contributing
+
+All feature, fix, maintenance, refactoring, and documentation work must use a short-lived branch and a pull request into `main`. See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, Conventional Commits, validation, review, migration, and squash-merge requirements.
+
 ## Deploy
 
 Import the GitHub repository into Vercel or reconnect the existing project:
