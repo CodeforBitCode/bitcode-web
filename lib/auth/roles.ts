@@ -2,6 +2,7 @@ export const appRoles = [
   "student",
   "parent_guardian",
   "instructor",
+  "marketing",
   "admin",
 ] as const;
 
@@ -17,6 +18,7 @@ export const permissions = [
   "enrollments:read:own",
   "enrollments:read:cohort",
   "enrollments:manage",
+  "admin:access",
   "enquiries:manage",
   "users:manage",
 ] as const;
@@ -46,6 +48,7 @@ export const rolePermissions: Record<AppRole, readonly Permission[]> = {
     "cohorts:read",
     "enrollments:read:cohort",
   ],
+  marketing: ["admin:access", "enquiries:manage"],
   admin: permissions,
 };
 

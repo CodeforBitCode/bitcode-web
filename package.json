@@ -16,8 +16,9 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:migrate": "node scripts/run-cli.mjs scripts/migrate.ts",
+    "db:studio": "drizzle-kit studio",
+    "admin:create": "node scripts/run-cli.mjs scripts/create-admin.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -37,6 +38,7 @@
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.3",
     "postcss": "8.5.26",
+    "tsx": "^4.23.12",
     "typescript": "^5.8.3",
     "vitest": "^4.1.11"
   },
