@@ -1732,6 +1732,15 @@ p {
   font-size: 0.72rem;
 }
 
+.form-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .links-page {
   position: relative;
   min-height: calc(100vh - 78px);

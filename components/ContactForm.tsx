@@ -5,9 +5,10 @@ import { learningPathTitles, siteConfig, whatsappUrl } from "@/data/site";
 import { ArrowIcon, MailIcon, MessageIcon } from "./Icons";
 
 type FormStatus = {
-  type: "idle" | "ready";
+  type: "idle" | "saving" | "ready";
   whatsapp?: string;
   mailto?: string;
+  persisted?: boolean;
 };
 
 export function ContactForm() {
@@ -29,7 +30,7 @@ export function ContactForm() {
     }
   }, []);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.currentTarget));
     const summary = [
@@ -45,11 +46,36 @@ export function ContactForm() {
     const subject = encodeURIComponent(
       `BitCode enquiry: ${String(data.course).trim()}`,
     );
-    setStatus({
-      type: "ready",
+    const contactOptions = {
       whatsapp: whatsappUrl(summary),
       mailto: `mailto:${siteConfig.email}?subject=${subject}&body=${encodeURIComponent(summary)}`,
-    });
+    };
+
+    setStatus({ type: "saving" });
+
+    try {
+      const response = await fetch("/api/enquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          studentAgeOrClass: data.studentClass,
+          learningPathInterest: data.course,
+          message: data.message,
+          website: data.website,
+        }),
+      });
+
+      setStatus({
+        type: "ready",
+        persisted: response.ok,
+        ...contactOptions,
+      });
+    } catch {
+      setStatus({ type: "ready", persisted: false, ...contactOptions });
+    }
   }
 
   return (
@@ -131,9 +157,18 @@ export function ContactForm() {
             placeholder="What would you like help with?"
           />
         </label>
+        <label className="form-honeypot" aria-hidden="true">
+          Website
+          <input name="website" type="text" tabIndex={-1} autoComplete="off" />
+        </label>
       </div>
-      <button className="button button--primary form-submit" type="submit">
-        Continue enquiry <ArrowIcon />
+      <button
+        className="button button--primary form-submit"
+        type="submit"
+        disabled={status.type === "saving"}
+      >
+        {status.type === "saving" ? "Saving enquiry…" : "Continue enquiry"}{" "}
+        <ArrowIcon />
       </button>
       {status.type === "ready" && (
         <div
@@ -142,8 +177,9 @@ export function ContactForm() {
           aria-live="polite"
         >
           <p>
-            Your details are ready. Choose email or a quick message below to
-            send them to BitCode.
+            {status.persisted
+              ? "Your enquiry has been saved. You can also contact BitCode directly below."
+              : "We could not save the enquiry right now. Please use email or WhatsApp below."}
           </p>
           <div>
             <a className="button button--primary" href={status.mailto}>
@@ -161,8 +197,8 @@ export function ContactForm() {
         </div>
       )}
       <p className="form-privacy">
-        Nothing is uploaded when you prepare the enquiry. You choose when and
-        how to send it.
+        When you continue, BitCode records these details so the team can
+        respond. Email and WhatsApp remain available as direct alternatives.
       </p>
     </form>
   );
