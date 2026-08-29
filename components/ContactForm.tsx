@@ -81,9 +81,8 @@ export function ContactForm() {
   return (
     <form
       className="contact-form"
-      action={`mailto:${siteConfig.email}`}
+      action="/api/enquiries"
       method="post"
-      encType="text/plain"
       onSubmit={handleSubmit}
     >
       <div className="form-heading">
